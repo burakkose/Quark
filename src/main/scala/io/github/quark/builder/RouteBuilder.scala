@@ -1,24 +1,24 @@
 package io.github.quark.builder
 
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.model._
+import io.github.quark.route.{QuarkRoute, QuarkRouteStatus}
 
 trait RouteBuilder {
 
-  protected def filters: Seq[String] = Seq.empty[String]
-
-  def via(f: Seq[String]): RouteBuilder =
-    new RouteBuilder {
-      override val filters: Seq[String] = f
+  def build(routes: Seq[String]): QuarkRoute = {
+    val definedRoutes = routes.map(createRoute)
+    val failedRoutes = QuarkRoute.instance {
+      case _: HttpRequest =>
+        QuarkRouteStatus.FAILED
     }
-
-  def build(routes: Seq[String]): Route = {
-    routes.map(routeBlueprint).reduceLeft(_ ~ _)
+    val routeList = definedRoutes.toList :+ failedRoutes
+    routeList.reduceLeft((r1, r2) => QuarkRoute.instance(r1 orElse r2))
   }
 
-  private def routeBlueprint(pm: String) = {
-    path(pm) { ctx =>
-      ctx.complete("")
+  private def createRoute(pm: String) = {
+    QuarkRoute.instance {
+      case HttpRequest(_, path, _, _, _) if path == Uri(s"/$pm") =>
+        QuarkRouteStatus.SUCCESS
     }
   }
 
