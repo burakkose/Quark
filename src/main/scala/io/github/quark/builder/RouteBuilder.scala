@@ -17,7 +17,7 @@ trait RouteBuilder {
 
   private def createRoute(pm: String) = {
     QuarkRoute.instance {
-      case HttpRequest(_, path, _, _, _) if path == Uri(s"/$pm") =>
+      case HttpRequest(_, uri, _, _, _) if uri.path == Uri.Path(s"/$pm") =>
         QuarkRouteStatus.SUCCESS
     }
   }
