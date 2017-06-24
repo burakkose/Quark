@@ -26,7 +26,9 @@ scalacOptions := Seq(
 libraryDependencies ++= {
   val akkaStreamV = "2.5.2"
   val akkaHttpV = "10.0.7"
+  val scalaTestV = "3.0.1"
   Seq(
+    "org.scalatest" %% "scalatest" % scalaTestV % "test",
     "com.typesafe.akka" %% "akka-http" % akkaHttpV,
     "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpV % Test,
     "com.typesafe.akka" %% "akka-stream" % akkaStreamV,
