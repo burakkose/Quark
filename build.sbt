@@ -27,11 +27,20 @@ libraryDependencies ++= {
   val akkaStreamV = "2.5.2"
   val akkaHttpV = "10.0.7"
   val scalaTestV = "3.0.1"
+  val shapelessV = "2.3.2"
   Seq(
     "org.scalatest" %% "scalatest" % scalaTestV % "test",
     "com.typesafe.akka" %% "akka-http" % akkaHttpV,
     "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpV % Test,
     "com.typesafe.akka" %% "akka-stream" % akkaStreamV,
-    "com.typesafe.akka" %% "akka-stream-testkit" % akkaStreamV % Test
+    "com.typesafe.akka" %% "akka-stream-testkit" % akkaStreamV % Test,
+    "com.chuusai" %% "shapeless" % shapelessV
   )
 }
+
+libraryDependencies += "org.typelevel" %% "cats" % "0.9.0"
+
+resolvers ++= Seq(
+  Resolver.sonatypeRepo("releases"),
+  Resolver.sonatypeRepo("snapshots")
+)
