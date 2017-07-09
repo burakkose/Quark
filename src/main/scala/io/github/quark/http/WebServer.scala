@@ -2,10 +2,14 @@ package io.github.quark.http
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.settings.ServerSettings
 import akka.stream.ActorMaterializer
+import akka.stream.scaladsl.Flow
 import com.typesafe.config.ConfigFactory
+import io.github.quark.route.Route
+import io.github.quark.stage.PipelineStage
+
+import scala.concurrent.ExecutionContext.Implicits.global
 
 trait WebServer {
 
@@ -19,14 +23,12 @@ trait WebServer {
     implicit val theSystem = system.getOrElse(ActorSystem())
     implicit val materializer = ActorMaterializer()
 
-    import theSystem.dispatcher
+    val flow = PipelineStage(routes)
+    val f = Flow.fromGraph(flow.pipelineFlow)
 
     Http()
-      .bindAndHandle(handler = routes,
-                     interface = host,
-                     port = port,
-                     settings = settings)
-      .foreach(_ => println(s"Server online at http://$host:$port/"))
+      .bindAndHandle(f, interface = host, port = port)
+      .foreach(_ => println("started"))
   }
 
   def start(host: String, port: Int): Unit = {
