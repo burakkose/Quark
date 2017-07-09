@@ -1,7 +1,7 @@
-package io.github.quark.operation
+package io.github.quark.action
 
-import io.github.quark.operation.OperationAction.OperationOutput
-import io.github.quark.operation.OperationResult.{Abort, Success}
+import io.github.quark.action.OperationAction.OperationOutput
+import io.github.quark.action.OperationResult.{Abort, Success}
 import io.github.quark.stage.PipelineStage.{Input, Output}
 
 sealed trait OperationResult[+T]

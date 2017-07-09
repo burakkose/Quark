@@ -1,6 +1,6 @@
 package io.github.quark.route
 
-import io.github.quark.operation.ServiceAction
+import io.github.quark.action.ServiceAction
 
 sealed trait RouteStatus
 

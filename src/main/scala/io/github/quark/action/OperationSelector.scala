@@ -1,4 +1,4 @@
-package io.github.quark.operation
+package io.github.quark.action
 
 import shapeless.{::, DepFn1, HList, HNil}
 

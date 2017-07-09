@@ -1,6 +1,6 @@
 package io.github.quark.route
 
-import io.github.quark.operation.ServiceAction
+import io.github.quark.action.ServiceAction
 import shapeless.{::, DepFn1, HList, HNil}
 
 trait RouteBuilder[L <: HList] extends DepFn1[L] {

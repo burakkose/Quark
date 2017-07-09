@@ -1,4 +1,4 @@
-package io.github.quark.operation
+package io.github.quark.action
 
 import shapeless._
 import shapeless.ops.hlist.IsHCons

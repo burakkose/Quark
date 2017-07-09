@@ -1,10 +1,10 @@
 package io.github.quark.dsl
 
 import io.github.quark.route.{Route, RouteBuilder}
-import io.github.quark.operation.GatewayAction.Gateway
-import io.github.quark.operation.OperationAction._
-import io.github.quark.operation.ServiceAction.Service
-import io.github.quark.operation.{OperationAction, ServiceAction}
+import io.github.quark.action.GatewayAction.Gateway
+import io.github.quark.action.OperationAction._
+import io.github.quark.action.ServiceAction.Service
+import io.github.quark.action.{OperationAction, ServiceAction}
 import io.github.quark.stage.PipelineStage.{Input, Output}
 import shapeless.ops.hlist.IsHCons
 import shapeless.{HList, IsDistinctConstraint, LUBConstraint}
