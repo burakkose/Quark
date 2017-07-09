@@ -3,9 +3,7 @@ package io.github.quark.stage
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import akka.stream.scaladsl.{Flow, GraphDSL, Merge, Partition}
 import akka.stream.{FlowShape, Graph}
-import io.github.quark.route.QuarkRouteStatus.{Failure, Success}
-import io.github.quark.route.{QuarkRoute, QuarkRouteStatus}
-import io.github.quark.stage.PipelineStage.Implicits._
+import io.github.quark.route.{Route, RouteStatus}
 import io.github.quark.stage.PipelineStage.{Input, Output}
 
 trait PipelineStage { this: RequestProcessingStage =>
@@ -29,8 +27,8 @@ trait PipelineStage { this: RequestProcessingStage =>
 
             // format: off
             input ~> partition.in
-                     partition.out(Success) ~> foundResponse ~> merge.in(Success)
-                     partition.out(Failure) ~> notFoundResponse ~> merge.in(Failure)
+                     partition.out(1) ~> foundResponse    ~> merge.in(1)
+                     partition.out(0) ~> notFoundResponse ~> merge.in(0)
             // format: on
 
             FlowShape(input.in, merge.out)
@@ -49,17 +47,13 @@ object PipelineStage {
   type Input = HttpRequest
   type Output = HttpResponse
 
-  def apply(routes: QuarkRoute): PipelineStage =
+  def apply(routes: Route): PipelineStage =
     new PipelineStage with RequestProcessingStage {
-      override protected def partitionFn: (Input) => Int = req => routes(req)
+      override protected def partitionFn: (Input) => Int =
+        req =>
+          routes(req) match {
+            case RouteStatus.Matched(_) => 1
+            case RouteStatus.UnMatched => 0
+        }
     }
-
-  object Implicits {
-    implicit def quarkRouteStatusToOutput(status: QuarkRouteStatus): Int =
-      status match {
-        case QuarkRouteStatus.Success => 1
-        case QuarkRouteStatus.Failure => 0
-      }
-  }
-
 }
