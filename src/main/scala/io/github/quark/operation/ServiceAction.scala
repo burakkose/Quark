@@ -3,10 +3,7 @@ package io.github.quark.operation
 import shapeless._
 import shapeless.ops.hlist.IsHCons
 
-sealed trait ServiceAction[L <: HList] {
-  def operation[T <: OperationAction](
-      implicit operationSelector: OperationSelector[L, T]): T
-}
+sealed trait ServiceAction
 
 object ServiceAction {
 
@@ -14,7 +11,7 @@ object ServiceAction {
       implicit lUBConstraint: LUBConstraint[L, OperationAction],
       isDistinctConstraint: IsDistinctConstraint[L],
       isHCons: IsHCons[L])
-      extends ServiceAction[L] {
+      extends ServiceAction {
     def operation[T <: OperationAction](
         implicit operationSelector: OperationSelector[L, T]): T = {
       operationSelector(ops)
