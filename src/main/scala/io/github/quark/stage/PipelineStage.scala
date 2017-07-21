@@ -3,8 +3,10 @@ package io.github.quark.stage
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import akka.stream.scaladsl.{Flow, GraphDSL, Merge, Partition}
 import akka.stream.{FlowShape, Graph}
-import io.github.quark.route.{Route, RouteStatus}
+import io.github.quark.action.{GatewayAction, ServiceSelector}
+import io.github.quark.route.RouteStatus
 import io.github.quark.stage.PipelineStage.{Input, Output}
+import shapeless.HList
 
 trait PipelineStage { this: RequestProcessingStage =>
 
@@ -47,11 +49,12 @@ object PipelineStage {
   type Input = HttpRequest
   type Output = HttpResponse
 
-  def apply(routes: Route): PipelineStage =
+  def apply[L <: HList](gateway: GatewayAction[L])(
+      implicit selector: ServiceSelector[L]): PipelineStage =
     new PipelineStage with RequestProcessingStage {
       override protected def partitionFn: (Input) => Int =
         req =>
-          routes(req) match {
+          gateway.service(req) match {
             case RouteStatus.Matched(_) => 1
             case RouteStatus.UnMatched => 0
         }
