@@ -1,20 +1,24 @@
 package io.github.quark.action
 
-import shapeless._
-import shapeless.ops.hlist.IsHCons
+import scala.reflect.ClassTag
 
-sealed trait ServiceAction
+sealed trait ServiceAction {
+  def path: String
+
+  def ops: Seq[OperationAction]
+
+  def operation[T <: OperationAction](implicit tag: ClassTag[T]): Option[T]
+}
 
 object ServiceAction {
 
-  final case class Service[L <: HList](path: String)(ops: L)(
-      implicit lUBConstraint: LUBConstraint[L, OperationAction],
-      isDistinctConstraint: IsDistinctConstraint[L],
-      isHCons: IsHCons[L])
+  final case class Service(path: String, ops: Seq[OperationAction])
       extends ServiceAction {
-    def operation[T <: OperationAction](
-        implicit operationSelector: OperationSelector[L, T]): T = {
-      operationSelector(ops)
+    def operation[T <: OperationAction](implicit tag: ClassTag[T]): Option[T] = {
+      ops.flatMap {
+        case operation: T => Some(operation)
+        case _ => None
+      }.headOption
     }
   }
 

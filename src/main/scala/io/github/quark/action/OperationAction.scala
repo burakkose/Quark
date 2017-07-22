@@ -24,36 +24,23 @@ trait OperationAction {
 }
 
 object OperationAction {
-  type Aux[L0, R0] = OperationAction {
-    type L = L0
-    type R = R0
-  }
-
-  type OperationF[A, B] = (A) => B
   type OperationOutput[A] = Either[String, A]
 
-  final case class Incoming(f: OperationF[Input, OperationOutput[Input]])
+  final case class Incoming(f: Input => OperationOutput[Input])
       extends OperationAction {
     type L = Input
     type R = Input
   }
 
-  final case class Outgoing(f: OperationF[Output, OperationOutput[Output]])
+  final case class Outgoing(f: Output => OperationOutput[Output])
       extends OperationAction {
     type L = Output
     type R = Output
   }
 
-  final case class Endpoint(f: OperationF[Input, OperationOutput[Output]])
+  final case class Endpoint(f: Input => OperationOutput[Output])
       extends OperationAction {
     type L = Input
     type R = Output
   }
-
-  implicit val withDefaultIncoming = Incoming(req => Right(req))
-
-  implicit val withDefaultOutgoing = Outgoing(res => Right(res))
-
-  implicit val withDefaultEndpoint = Endpoint(null)
-
 }

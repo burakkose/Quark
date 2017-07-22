@@ -1,24 +1,31 @@
 package io.github.quark.action
 
+import io.github.quark.route.RouteStatus.{Matched, UnMatched}
 import io.github.quark.route.{Route, RouteStatus}
 import io.github.quark.stage.PipelineStage.Input
-import shapeless.ops.hlist.IsHCons
-import shapeless.{HList, LUBConstraint}
 
-sealed trait GatewayAction[L <: HList] {
-  def service(request: Input)(
-      implicit selector: ServiceSelector[L]): RouteStatus
+import scala.annotation.tailrec
+
+sealed trait GatewayAction {
+  def service(request: Input): RouteStatus
 }
 
 object GatewayAction {
 
-  final case class Gateway[L <: HList](services: L)(
-      implicit lUBConstraint1: LUBConstraint[L, Route],
-      isHCons: IsHCons[L])
-      extends GatewayAction[L] {
-    def service(request: Input)(
-        implicit selector: ServiceSelector[L]): RouteStatus = {
-      selector(services, request)
+  final case class Gateway(routes: Seq[Route]) extends GatewayAction {
+    def service(request: Input): RouteStatus = {
+      @tailrec
+      def inner(s: List[Route]): RouteStatus = {
+        s match {
+          case Nil => UnMatched
+          case h :: t =>
+            h.apply(request) match {
+              case m @ Matched(_) => m
+              case UnMatched => inner(t)
+            }
+        }
+      }
+      inner(routes.toList)
     }
   }
 
