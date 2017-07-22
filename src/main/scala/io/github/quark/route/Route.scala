@@ -4,12 +4,11 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.PathMatcher.Unmatched
 import akka.http.scaladsl.server.PathMatcher1
 import akka.http.scaladsl.server.PathMatchers.{PathEnd, Remaining, Slash}
+import io.github.quark.action.ServiceAction
 import io.github.quark.route.RouteStatus.{
   Matched => QMatched,
   UnMatched => QUnMatched
 }
-import io.github.quark.action.ServiceAction
-import io.github.quark.action.ServiceAction.Service
 import io.github.quark.stage.PipelineStage.Input
 
 trait Route extends Route.Fn
@@ -21,7 +20,7 @@ object Route {
     new Route {
       def apply(v1: Input): RouteStatus = {
         service match {
-          case s: Service[_] =>
+          case s: ServiceAction =>
             val baseMatcher = Slash ~ s.path
             val matcher = baseMatcher ~ (Slash | (Slash.? ~ PathEnd)) ~ Remaining
             val isSuccessFn = isSuccess(matcher) _
