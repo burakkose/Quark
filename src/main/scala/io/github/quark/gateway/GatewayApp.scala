@@ -1,4 +1,4 @@
-package io.github.quark.http
+package io.github.quark.gateway
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
@@ -6,14 +6,12 @@ import akka.http.scaladsl.settings.ServerSettings
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Flow
 import com.typesafe.config.ConfigFactory
-import io.github.quark.action.{GatewayAction, ServiceSelector}
+import io.github.quark.action.GatewayAction
 import io.github.quark.stage.PipelineStage
-import shapeless.HList
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class GatewayApp[L <: HList](gate: GatewayAction[L])(
-    implicit selector: ServiceSelector[L]) {
+class GatewayApp(gate: GatewayAction) {
 
   def start(host: String,
             port: Int,
@@ -49,7 +47,6 @@ class GatewayApp[L <: HList](gate: GatewayAction[L])(
 }
 
 object GatewayApp {
-  def apply[L <: HList](gate: GatewayAction[L])(
-      implicit selector: ServiceSelector[L]): GatewayApp[L] =
+  def apply(gate: GatewayAction): GatewayApp =
     new GatewayApp(gate)
 }
