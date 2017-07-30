@@ -21,7 +21,7 @@ object Route {
       def apply(v1: Input): RouteStatus = {
         service match {
           case s: ServiceAction =>
-            val baseMatcher = Slash ~ s.path
+            val baseMatcher = Slash ~ s.id
             val matcher = baseMatcher ~ (Slash | (Slash.? ~ PathEnd)) ~ Remaining
             val isSuccessFn = isSuccess(matcher) _
             v1 match {
