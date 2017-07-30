@@ -7,7 +7,7 @@ import io.github.quark.action.{OperationAction, ServiceAction}
 import io.github.quark.route.{Route, RouteBuilder}
 import io.github.quark.stage.PipelineStage.{Input, Output}
 import shapeless.ops.hlist.{IsHCons, ToTraversable}
-import shapeless.{HList, HNil, IsDistinctConstraint, LUBConstraint}
+import shapeless.{HList, IsDistinctConstraint, LUBConstraint}
 
 sealed trait DSL
 
@@ -30,6 +30,8 @@ trait ServiceDSL extends DSL {
       toTraversableAux: ToTraversable.Aux[L, List, OperationAction],
       isHCons: IsHCons[L]): Service =
     Service(id, operations.toList[OperationAction])
+
+  def proxy(id: String): Service = Service(id, Nil)
 }
 
 trait GatewayDSL extends DSL {
