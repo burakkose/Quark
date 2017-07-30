@@ -3,7 +3,7 @@ package io.github.quark.dsl
 import io.github.quark.action.{OperationAction, ServiceAction}
 import shapeless.{::, HList, HNil}
 
-object Concatenation {
+trait Concatenation {
 
   implicit class Concatenation[P, L <: HList](l: L) {
     def ~[M <: P](other: M): M :: L = other +: l

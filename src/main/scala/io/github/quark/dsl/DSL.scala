@@ -41,4 +41,4 @@ trait GatewayDSL extends DSL {
     Gateway(builder(services).toList[Route])
 }
 
-object DSL extends OperationDSL with ServiceDSL with GatewayDSL
+object DSL extends OperationDSL with ServiceDSL with GatewayDSL with Concatenation
