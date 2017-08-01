@@ -24,23 +24,25 @@ trait OperationDSL extends DSL {
 }
 
 trait ServiceDSL extends DSL {
-  def service[L <: HList](id: String)(operations: L)(
-      implicit lUBConstraint: LUBConstraint[L, OperationAction],
-      isDistinctConstraint: IsDistinctConstraint[L],
-      toTraversableAux: ToTraversable.Aux[L, List, OperationAction],
-      isHCons: IsHCons[L]): Service =
-    Service(id, operations.toList[OperationAction])
+  def service[L0, L1 <: HList](id: String)(operations: L0)(
+      implicit asHList: HListable.Aux[L0, L1],
+      lUBConstraint: LUBConstraint[L1, OperationAction],
+      isDistinctConstraint: IsDistinctConstraint[L1],
+      toTraversableAux: ToTraversable.Aux[L1, List, OperationAction],
+      isHCons: IsHCons[L1]): Service =
+    Service(id, asHList(operations).toList[OperationAction])
 
   def proxy(id: String): Service = Service(id, Nil)
 }
 
 trait GatewayDSL extends DSL {
-  def gateway[L1 <: HList, L2 <: HList](services: L1)(
-      implicit builder: RouteBuilder.Aux[L1, L2],
+  def gateway[L0, L1 <: HList, L2 <: HList](services: L0)(
+      implicit asHList: HListable.Aux[L0, L1],
+      builder: RouteBuilder.Aux[L1, L2],
       isHCons1: IsHCons[L1],
       lUBConstraint: LUBConstraint[L1, ServiceAction],
       toTraversableAux: ToTraversable.Aux[L2, List, Route]): Gateway =
-    Gateway(builder(services).toList[Route])
+    Gateway(builder(asHList(services)).toList[Route])
 }
 
 object DSL
