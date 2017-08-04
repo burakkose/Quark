@@ -28,13 +28,15 @@ libraryDependencies ++= {
   val akkaHttpV = "10.0.9"
   val scalaTestV = "3.0.1"
   val shapelessV = "2.3.2"
+  val pureConfigV = "0.7.2"
   Seq(
     "org.scalatest" %% "scalatest" % scalaTestV % "test",
     "com.typesafe.akka" %% "akka-http" % akkaHttpV,
     "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpV % Test,
     "com.typesafe.akka" %% "akka-stream" % akkaStreamV,
     "com.typesafe.akka" %% "akka-stream-testkit" % akkaStreamV % Test,
-    "com.chuusai" %% "shapeless" % shapelessV
+    "com.chuusai" %% "shapeless" % shapelessV,
+    "com.github.pureconfig" %% "pureconfig" % pureConfigV
   )
 }
 
