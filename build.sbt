@@ -24,11 +24,11 @@ scalacOptions := Seq(
 )
 
 libraryDependencies ++= {
-  val akkaStreamV = "2.5.4"
-  val akkaHttpV = "10.0.9"
+  val akkaStreamV = "2.5.6"
+  val akkaHttpV = "10.0.10"
   val scalaTestV = "3.0.1"
   val shapelessV = "2.3.2"
-  val pureConfigV = "0.7.2"
+  val pureConfigV = "0.8.0"
   Seq(
     "org.scalatest" %% "scalatest" % scalaTestV % "test",
     "com.typesafe.akka" %% "akka-http" % akkaHttpV,
@@ -39,8 +39,6 @@ libraryDependencies ++= {
     "com.github.pureconfig" %% "pureconfig" % pureConfigV
   )
 }
-
-libraryDependencies += "org.typelevel" %% "cats" % "0.9.0"
 
 resolvers ++= Seq(
   Resolver.sonatypeRepo("releases"),
