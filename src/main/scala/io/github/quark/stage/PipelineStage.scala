@@ -1,12 +1,18 @@
 package io.github.quark.stage
 
-import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
+import akka.actor.ActorSystem
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.model.Uri.Host
+import akka.http.scaladsl.model.{HttpRequest, HttpResponse, Uri}
 import akka.stream.scaladsl.{Flow, GraphDSL, Merge, Partition}
-import akka.stream.{FlowShape, Graph}
+import akka.stream.{ActorMaterializer, FlowShape, Graph}
 import io.github.quark.action.GatewayAction
 import io.github.quark.action.OperationAction.{Endpoint, Incoming, Outgoing}
+import io.github.quark.resolver.ServiceResolver
 import io.github.quark.route.RouteStatus
 import io.github.quark.stage.PipelineStage.{Input, Output}
+
+import scala.concurrent.Future
 
 trait PipelineStage { this: RequestProcessingStage =>
 
@@ -27,13 +33,13 @@ trait PipelineStage { this: RequestProcessingStage =>
             val input = builder.add(inputStage)
             val merge = builder.add(mergeStage)
             val partition = builder.add(partitionStage)
-            val notFoundResponse = builder.add(notFoundFlow)
-            val foundResponse = builder.add(requestProcessingGraph)
+            val notFound = builder.add(notFoundFlow)
+            val found = builder.add(requestProcessingGraph)
 
             // format: off
             input ~> partition.in
-                     partition.out(1) ~> foundResponse    ~> merge.in(1)
-                     partition.out(0) ~> notFoundResponse ~> merge.in(0)
+                     partition.out(1) ~> found    ~> merge.in(1)
+                     partition.out(0) ~> notFound ~> merge.in(0)
             // format: on
 
             FlowShape(input.in, merge.out)
@@ -45,15 +51,18 @@ trait PipelineStage { this: RequestProcessingStage =>
   private val mergeStage = Merge[HttpResponse](2)
   private val partitionStage = Partition[(Input, RouteStatus)](2, partitionFn)
   private val notFoundFlow = Flow[Any].map(_ => HttpResponse(status = 404))
-
 }
 
 object PipelineStage {
   type Input = HttpRequest
   type Output = HttpResponse
 
-  def apply(gateway: GatewayAction): PipelineStage =
+  def apply(gateway: GatewayAction, serviceResolver: ServiceResolver)(
+      implicit actorSystem: ActorSystem,
+      actorMaterializer: ActorMaterializer): PipelineStage =
     new PipelineStage with RequestProcessingStage {
+
+      implicit val executionContext = actorSystem.dispatcher
 
       protected def partitionFn: ((Input, RouteStatus)) => Int =
         tup =>
@@ -66,24 +75,37 @@ object PipelineStage {
         req => gateway.service(req)
 
       protected val incomingStage: OperationStage[Input, Input] =
-        new OperationStage[Input, Input] {
-          protected val stageName: String = "incoming-flow"
-
-          protected val defaultOperation: Incoming = Incoming(Right.apply)
-        }
-
-      protected val outgoingStage: OperationStage[Output, Output] =
-        new OperationStage[Output, Output] {
-          protected val stageName: String = "outgoing-flow"
-
-          protected val defaultOperation: Outgoing = Outgoing(Right.apply)
+        new OperationStage[Input, Input]("incoming-flow") {
+          protected val defaultOperation = Incoming(
+            req => Future.successful(Right(req))
+          )
         }
 
       protected val endpointStage: OperationStage[Input, Output] =
-        new OperationStage[Input, Output] {
-          protected val stageName: String = "endpoint-flow"
+        new OperationStage[Input, Output]("endpoint-flow") {
+          protected val defaultOperation = Endpoint { req =>
+            serviceResolver.findServiceLocation(req) match {
+              case Some((remote, path)) =>
+                val requestURI = req.uri
+                val uriAuthority = requestURI.authority
+                val modifiedURI = requestURI.copy(
+                  authority = uriAuthority.copy(host = Host(remote), port = 0),
+                  path = Uri.Path(path)
+                )
+                Http()
+                  .singleRequest(req.copy(uri = modifiedURI))
+                  .map(Right.apply)
+              case _ =>
+                Future.successful(Left(s"${req.uri} cannot be resolved."))
+            }
+          }
+        }
 
-          protected val defaultOperation: Endpoint = Endpoint(null)
+      protected val outgoingStage: OperationStage[Output, Output] =
+        new OperationStage[Output, Output]("outgoing-flow") {
+          protected val defaultOperation = Outgoing(
+            res => Future.successful(Right(res))
+          )
         }
     }
 }
