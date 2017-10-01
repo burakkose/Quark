@@ -9,13 +9,12 @@ import io.github.quark.action.OperationResult.{Abort, Success}
 import io.github.quark.route.RouteStatus
 import io.github.quark.stage.StageResult._
 
-trait OperationStage[In, Out] {
+import scala.concurrent.{ExecutionContext, Future}
 
-  protected def stageName: String
+abstract class OperationStage[In, Out](stageName: String)(
+    implicit ec: ExecutionContext) {
 
-  protected def defaultOperation: Operation
-
-  private type Operation = OperationAction {
+  protected val defaultOperation: OperationAction {
     type L = In
     type R = Out
   }
@@ -33,28 +32,31 @@ trait OperationStage[In, Out] {
         UniformFanOutShape(processing.in, partition.out(0), partition.out(1))
       }
       .named(stageName)
+      .async
   }
 
   private val partitionFlow =
     Partition[(StageResult[Out], RouteStatus)](
       2,
-      tup => if (tup._1.isSuccess) 1 else 0)
+      tup => if (tup._1.isSuccess) 1 else 0
+    )
 
   private val processingFlow =
-    Flow[(In, RouteStatus)].map {
+    Flow[(In, RouteStatus)].mapAsync(1) {
       case (input, routeStatus) =>
-        val result = routeStatus match {
+        val stageResult: Future[StageResult[Out]] = routeStatus match {
           case RouteStatus.Matched(service) =>
-            val operation: Operation =
-              service.operation[Operation].getOrElse(defaultOperation)
-            operation.apply(input) match {
+            val operation = service
+              .operation[defaultOperation.type]
+              .getOrElse(defaultOperation)
+            operation(input).map {
               case Success(res) => Complete(res)
-              case Abort(cause) => Failed(StageFailCause(cause))
+              case Abort(cause) => Failed(FailureCause(cause))
             }
           case RouteStatus.UnMatched =>
-            Failed(StageFailCause("not service found"))
+            Future.successful(Failed(FailureCause("not service found")))
         }
-        (result, routeStatus)
+        stageResult.map(res => (res, routeStatus))
     }
 }
 
