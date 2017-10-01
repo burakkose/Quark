@@ -10,10 +10,8 @@ object StageResult {
     override def isSuccess: Boolean = true
   }
 
-  final case class Failed[+T](cause: StageFailCause) extends StageResult[T] {
+  final case class Failed[+T](cause: String) extends StageResult[T] {
     override def isSuccess: Boolean = false
   }
 
 }
-
-final case class StageFailCause(cause: String)

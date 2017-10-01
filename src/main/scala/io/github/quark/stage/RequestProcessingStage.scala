@@ -55,7 +55,7 @@ trait RequestProcessingStage {
       .map {
         case (stageResult, _) =>
           stageResult match {
-            case Failed(cause) => HttpResponse(entity = cause.cause)
+            case Failed(cause) => HttpResponse(entity = cause)
             case _ => throw new MatchError("Abort flow excepts failed result.")
           }
       }

@@ -51,10 +51,10 @@ abstract class OperationStage[In, Out](stageName: String)(
               .getOrElse(defaultOperation)
             operation(input).map {
               case Success(res) => Complete(res)
-              case Abort(cause) => Failed(FailureCause(cause))
+              case Abort(cause) => Failed(cause)
             }
           case RouteStatus.UnMatched =>
-            Future.successful(Failed(FailureCause("not service found")))
+            Future.successful(Failed("not service found"))
         }
         stageResult.map(res => (res, routeStatus))
     }
