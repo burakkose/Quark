@@ -7,11 +7,11 @@ import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Flow
 import com.typesafe.config.ConfigFactory
 import io.github.quark.action.GatewayAction
+import io.github.quark.resolver.{ServiceResolver, SimpleServiceResolver}
 import io.github.quark.stage.PipelineStage
 
-import scala.concurrent.ExecutionContext.Implicits.global
-
-class GatewayApp(gate: GatewayAction) {
+class GatewayApp(gate: GatewayAction,
+                 serviceResolver: Option[ServiceResolver] = None) {
 
   def start(host: String,
             port: Int,
@@ -20,8 +20,10 @@ class GatewayApp(gate: GatewayAction) {
 
     implicit val theSystem = system.getOrElse(ActorSystem())
     implicit val materializer = ActorMaterializer()
+    implicit val executionContext = theSystem.dispatcher
 
-    val flow = PipelineStage(gate)
+    val flow =
+      PipelineStage(gate, serviceResolver.getOrElse(SimpleServiceResolver()))
     val f = Flow.fromGraph(flow.pipelineFlow)
 
     Http()
@@ -47,6 +49,7 @@ class GatewayApp(gate: GatewayAction) {
 }
 
 object GatewayApp {
-  def apply(gate: GatewayAction): GatewayApp =
-    new GatewayApp(gate)
+  def apply(gate: GatewayAction,
+            serviceResolver: Option[ServiceResolver] = None): GatewayApp =
+    new GatewayApp(gate, serviceResolver)
 }
